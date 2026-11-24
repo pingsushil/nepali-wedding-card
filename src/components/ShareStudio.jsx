@@ -11,6 +11,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations } from '../data/translations';
 import { buildPersonalizedInviteUrl } from '../utils/urlParams';
 import { DhakaBorder, RoyalDivider } from './DhakaBorder';
 import { triggerMiniGoldPop } from '../utils/confetti';
@@ -68,11 +69,15 @@ async function copyText(value) {
   }
 }
 
-export function ShareStudio({ onExitToPreview }) {
+export function ShareStudio({ lang = 'en', onExitToPreview }) {
   const [familyName, setFamilyName] = useState('Suman Thapa & Family');
   const [copiedUrl, setCopiedUrl] = useState(false);
   const [copiedMsg, setCopiedMsg] = useState(false);
   const [recentInvites, setRecentInvites] = useState(() => loadRecentInvites());
+
+  const t = translations[lang]?.share || translations.en.share;
+  const doorsT = translations[lang]?.doors || translations.en.doors;
+  const nepaliFont = lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined;
 
   const effectiveName =
     familyName.trim() || weddingConfig.entrance.defaultGuestName;
@@ -119,12 +124,12 @@ export function ShareStudio({ onExitToPreview }) {
     <div className="min-h-[100dvh] w-full bg-[#3D0814] text-[#FDF8F0] royal-silk-bg overflow-x-clip">
       <DhakaBorder height={16} opacity={0.9} />
 
-      <div className="mx-auto w-full max-w-lg px-5 py-7 pb-14">
+      <div className="mx-auto w-full max-w-lg px-5 pt-14 pb-14" style={nepaliFont}>
         {/* Top Navigation Row */}
         <div className="flex items-center justify-between gap-2 mb-6">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/45 bg-[#2A040C]/85 px-3 py-1 text-[10.5px] uppercase tracking-[0.2em] text-[#F3D98B]">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/45 bg-[#2A040C]/85 px-3 py-1 text-[10.5px] uppercase tracking-[0.16em] text-[#F3D98B]">
             <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-            <span>Host Share Studio</span>
+            <span>{t.badge}</span>
           </div>
 
           <button
@@ -133,7 +138,7 @@ export function ShareStudio({ onExitToPreview }) {
             className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/35 bg-[#2A040C]/70 px-3 py-1.5 text-xs text-[#F7E7CE] hover:border-[#F3D98B] cursor-pointer transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Preview Card</span>
+            <span>{t.previewBtn}</span>
           </button>
         </div>
 
@@ -147,14 +152,16 @@ export function ShareStudio({ onExitToPreview }) {
             {weddingConfig.couple.brideFirst}
           </p>
           <h1
-            className="text-gold-foil text-[34px] sm:text-[40px] font-semibold leading-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-gold-foil text-[32px] sm:text-[38px] font-semibold leading-tight"
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            Personalize &amp; Share
+            {t.heading}
           </h1>
           <p className="mt-1.5 text-xs text-[#F7E7CE]/78 max-w-sm mx-auto leading-relaxed">
-            Enter any family&apos;s name below to craft their bespoke 3D golden door
-            greeting and send it straight on WhatsApp.
+            {t.subtitle}
           </p>
           <RoyalDivider className="mt-4" />
         </div>
@@ -169,10 +176,10 @@ export function ShareStudio({ onExitToPreview }) {
         >
           <label
             htmlFor="share-guest-name"
-            className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-[#F3D98B] mb-2"
+            className="flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-[#F3D98B] mb-2"
           >
             <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Invitee / Family Name</span>
+            <span>{t.inputLabel}</span>
           </label>
 
           <input
@@ -201,25 +208,28 @@ export function ShareStudio({ onExitToPreview }) {
 
           {/* Live Crest Plaque Preview */}
           <div className="mt-5 rounded-xl border border-[#D4AF37]/50 bg-[#2A040C]/90 px-4 py-3.5 text-center shadow-inner">
-            <p className="text-[10px] uppercase tracking-[0.2em] text-[#D4AF37]/85 mb-1">
-              Live Door Crest Preview
+            <p className="text-[10px] uppercase tracking-[0.18em] text-[#D4AF37]/85 mb-1">
+              {t.crestPreviewLabel}
             </p>
             <p
               className="text-gold-foil text-xl font-semibold leading-snug break-words"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{
+                fontFamily:
+                  lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+              }}
             >
-              Namaste, {effectiveName}
+              {doorsT.salutationPrefix} {effectiveName}
             </p>
-            <p className="mt-0.5 text-[10.5px] uppercase tracking-[0.2em] text-[#F7E7CE]/80">
-              You Are Cordially Invited
+            <p className="mt-0.5 text-[10.5px] uppercase tracking-[0.18em] text-[#F7E7CE]/80">
+              {doorsT.salutationSuffix}
             </p>
           </div>
         </div>
 
         {/* Personalized Link Output + Copy */}
         <div className="mt-5 rounded-2xl border border-[#D4AF37]/35 bg-[#24040B]/85 p-4">
-          <p className="text-[10.5px] uppercase tracking-[0.2em] text-[#F3D98B] mb-2">
-            Personalized Invitation URL
+          <p className="text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B] mb-2">
+            {t.urlLabel}
           </p>
           <div className="rounded-xl border border-[#D4AF37]/25 bg-[#180207] px-3.5 py-2.5 text-xs text-[#F7E7CE]/90 break-all font-mono">
             {personalizedUrl}
@@ -240,12 +250,12 @@ export function ShareStudio({ onExitToPreview }) {
               {copiedUrl ? (
                 <>
                   <Check className="w-4 h-4" />
-                  <span>Link Copied!</span>
+                  <span>{t.linkCopied}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-4 h-4" />
-                  <span>Copy Invite Link</span>
+                  <span>{t.copyLink}</span>
                 </>
               )}
             </motion.button>
@@ -260,7 +270,7 @@ export function ShareStudio({ onExitToPreview }) {
               className="flex items-center justify-center gap-2 rounded-xl border border-[#34D399]/50 bg-[#0D5B3E] px-4 py-3 text-xs font-semibold text-[#FDF8F0] hover:bg-[#10704D] transition-colors shadow-[0_8px_20px_rgba(13,91,62,0.35)]"
             >
               <MessageCircle className="w-4 h-4" />
-              <span>Send on WhatsApp</span>
+              <span>{t.sendWhatsapp}</span>
             </motion.a>
           </div>
         </div>
@@ -268,8 +278,8 @@ export function ShareStudio({ onExitToPreview }) {
         {/* WhatsApp Message Preview */}
         <div className="mt-5 rounded-2xl border border-[#D4AF37]/30 bg-[#24040B]/75 p-4">
           <div className="flex items-center justify-between gap-2 mb-2">
-            <p className="text-[10.5px] uppercase tracking-[0.2em] text-[#F3D98B]">
-              WhatsApp Message Preview
+            <p className="text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B]">
+              {t.msgPreviewLabel}
             </p>
             <button
               type="button"
@@ -279,12 +289,12 @@ export function ShareStudio({ onExitToPreview }) {
               {copiedMsg ? (
                 <>
                   <Check className="w-3 h-3 text-[#F3D98B]" />
-                  <span>Copied</span>
+                  <span>{t.copied}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3 h-3 text-[#D4AF37]" />
-                  <span>Copy Text</span>
+                  <span>{t.copyText}</span>
                 </>
               )}
             </button>
@@ -299,16 +309,16 @@ export function ShareStudio({ onExitToPreview }) {
             className="mt-3 inline-flex items-center gap-1.5 text-xs text-[#F3D98B] hover:text-[#FFF4D4]"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span>Open live invitation for {effectiveName}</span>
+            <span>{t.openLivePrefix} {effectiveName}</span>
           </a>
         </div>
 
         {/* Recent Shared History */}
         {recentInvites.length > 0 && (
           <div className="mt-5 rounded-2xl border border-[#D4AF37]/25 bg-[#24040B]/60 p-4">
-            <p className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.2em] text-[#D4AF37] mb-2.5">
+            <p className="flex items-center gap-1.5 text-[10.5px] uppercase tracking-[0.18em] text-[#D4AF37] mb-2.5">
               <Clock className="w-3.5 h-3.5" />
-              <span>Recently Prepared</span>
+              <span>{t.recentLabel}</span>
             </p>
             <div className="flex flex-wrap gap-2">
               {recentInvites.map((recent) => (

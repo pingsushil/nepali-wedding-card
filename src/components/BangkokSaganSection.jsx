@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { OPTIONAL_ASSETS } from 'virtual:optional-assets';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations } from '../data/translations';
 import { RoyalDivider } from './DhakaBorder';
 import { triggerMiniGoldPop } from '../utils/confetti';
 
@@ -58,7 +59,7 @@ function sampleQuadraticBezier(t, p0, p1, p2) {
  * Custom Animated SVG Travel Header: KTM (Kathmandu) -> BKK (Bangkok)
  * with self-drawing golden dashed flight arc and a tiny gliding airplane icon.
  */
-function FlightPathIllustration({ reducedMotion = false }) {
+function FlightPathIllustration({ reducedMotion = false, originCity, destinationCity, flightLabel }) {
   const wrapRef = useRef(null);
   const isInView = useInView(wrapRef, { once: true, amount: 0.35 });
   const [planePos, setPlanePos] = useState({ x: 52, y: 84, angle: -34 });
@@ -189,7 +190,7 @@ function FlightPathIllustration({ reducedMotion = false }) {
           fontSize="8.5"
           letterSpacing="0.8"
         >
-          {route.originCity}
+          {originCity || route.originCity}
         </text>
 
         {/* Destination Airport Pin: BKK */}
@@ -215,7 +216,7 @@ function FlightPathIllustration({ reducedMotion = false }) {
           fontSize="8.5"
           letterSpacing="0.8"
         >
-          {route.destinationCity}
+          {destinationCity || route.destinationCity}
         </text>
 
         {/* Center badge text */}
@@ -228,7 +229,7 @@ function FlightPathIllustration({ reducedMotion = false }) {
           fontSize="8.5"
           letterSpacing="1.6"
         >
-          {route.flightLabel.toUpperCase()}
+          {flightLabel || route.flightLabel.toUpperCase()}
         </text>
 
         {/* Gliding Tiny Golden Airplane Icon along the Bezier Arc */}
@@ -374,8 +375,10 @@ async function copyTextReliably(text) {
   }
 }
 
-export function BangkokSaganSection({ reducedMotion = false }) {
+export function BangkokSaganSection({ lang = 'en', reducedMotion = false }) {
   const { sagan } = weddingConfig;
+  const t = translations[lang]?.sagan || translations.en.sagan;
+  const nepaliFont = lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined;
   const [selectedTagId, setSelectedTagId] = useState(sagan.blessingTags[0].id);
   const [qrImageFailed, setQrImageFailed] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -384,8 +387,10 @@ export function BangkokSaganSection({ reducedMotion = false }) {
   const copyBtnRef = useRef(null);
   const toastTimerRef = useRef(null);
 
-  const selectedTag =
-    sagan.blessingTags.find((t) => t.id === selectedTagId) || sagan.blessingTags[0];
+  const selectedTagBase =
+    sagan.blessingTags.find((tag) => tag.id === selectedTagId) || sagan.blessingTags[0];
+  const selectedTagLocalized = t.tags[selectedTagBase.id] || selectedTagBase;
+  const selectedTag = { ...selectedTagBase, ...selectedTagLocalized };
 
   const resolvedQrSrc = sagan.qrImagePath.startsWith('http')
     ? sagan.qrImagePath
@@ -421,7 +426,7 @@ export function BangkokSaganSection({ reducedMotion = false }) {
     triggerMiniGoldPop(origin);
 
     flashToast(
-      `Copied ${sagan.paymentId} • Sagan Tag: "${selectedTag.label}"`
+      `${t.copiedToastPrefix} ${sagan.paymentId} • ${t.saganTagPrefix} "${selectedTag.label}"`
     );
     window.setTimeout(() => setCopied(false), 2400);
   };
@@ -434,7 +439,7 @@ export function BangkokSaganSection({ reducedMotion = false }) {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      flashToast('QR saved! Upload it in eSewa, Khalti, or Fonepay.');
+      flashToast(t.savedToast);
       return;
     }
 
@@ -493,7 +498,7 @@ export function BangkokSaganSection({ reducedMotion = false }) {
         document.body.removeChild(link);
       }
       URL.revokeObjectURL(url);
-      flashToast('QR card downloaded! Upload it inside eSewa, Khalti, or Fonepay.');
+      flashToast(t.savedToast);
     };
 
     img.onerror = () => {
@@ -534,28 +539,39 @@ export function BangkokSaganSection({ reducedMotion = false }) {
 
         {/* Section Header */}
         <div className="relative text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#2A040C]/80 px-3.5 py-1 text-[10.5px] uppercase tracking-[0.2em] text-[#F3D98B] mb-3">
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/40 bg-[#2A040C]/80 px-3.5 py-1 text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B] mb-3"
+            style={nepaliFont}
+          >
             <Plane className="w-3 h-3 text-[#D4AF37]" />
-            <span>{sagan.sectionEyebrow}</span>
+            <span>{t.eyebrow}</span>
           </div>
 
           <p
             className="text-sm text-[#F7E7CE]/90 tracking-wide"
             style={{ fontFamily: 'var(--font-nepali)' }}
           >
-            {sagan.nepaliTitle}
+            {t.nepaliSub}
           </p>
           <h2
-            className="text-gold-foil text-[32px] sm:text-[38px] font-semibold leading-tight mt-0.5"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-gold-foil text-[30px] sm:text-[36px] font-semibold leading-tight mt-0.5"
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            {sagan.title}
+            {t.heading}
           </h2>
         </div>
 
         {/* Custom Animated KTM -> BKK Flight Arc SVG */}
         <div className="mt-5">
-          <FlightPathIllustration reducedMotion={reducedMotion} />
+          <FlightPathIllustration
+            reducedMotion={reducedMotion}
+            originCity={t.originCity}
+            destinationCity={t.destinationCity}
+            flightLabel={t.flightLabel}
+          />
         </div>
 
         {/* Warm, Respectful Nepali & English Sagan Message */}
@@ -566,8 +582,8 @@ export function BangkokSaganSection({ reducedMotion = false }) {
           >
             &ldquo;{sagan.messageNepali}&rdquo;
           </p>
-          <p className="text-[13px] text-[#FDF8F0]/82 leading-relaxed">
-            {sagan.messageEnglish}
+          <p className="text-[13px] text-[#FDF8F0]/82 leading-relaxed" style={nepaliFont}>
+            {t.messageEnglish}
           </p>
         </div>
 
@@ -575,14 +591,18 @@ export function BangkokSaganSection({ reducedMotion = false }) {
 
         {/* Interactive Playful Blessing Tags */}
         <div className="mb-6">
-          <p className="text-center text-[11px] uppercase tracking-[0.2em] text-[#F3D98B] mb-3 flex items-center justify-center gap-1.5">
+          <p
+            className="text-center text-[11px] uppercase tracking-[0.18em] text-[#F3D98B] mb-3 flex items-center justify-center gap-1.5"
+            style={nepaliFont}
+          >
             <HeartHandshake className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>Choose a Blessing Note</span>
+            <span>{t.chooseNote}</span>
           </p>
 
           <div className="flex flex-wrap justify-center gap-2">
             {sagan.blessingTags.map((tag) => {
               const isSelected = tag.id === selectedTagId;
+              const locTag = t.tags[tag.id] || tag;
               return (
                 <motion.button
                   key={tag.id}
@@ -596,6 +616,7 @@ export function BangkokSaganSection({ reducedMotion = false }) {
                       ? 'text-[#3D0814] border-[#FFF4D4]'
                       : 'text-[#F7E7CE]/90 border-[#D4AF37]/35 bg-[#2A040C]/70 hover:border-[#D4AF37]/70'
                   }`}
+                  style={nepaliFont}
                 >
                   {isSelected && (
                     <motion.span
@@ -611,7 +632,7 @@ export function BangkokSaganSection({ reducedMotion = false }) {
                   )}
                   <span className="relative z-10 flex items-center gap-1.5">
                     <span aria-hidden="true">{tag.emoji}</span>
-                    <span>{tag.label}</span>
+                    <span>{locTag.label}</span>
                   </span>
                 </motion.button>
               );
@@ -621,12 +642,13 @@ export function BangkokSaganSection({ reducedMotion = false }) {
           {/* Animated Selected Blessing Preview */}
           <AnimatePresence mode="wait">
             <motion.p
-              key={selectedTag.id}
+              key={`${lang}-${selectedTag.id}`}
               initial={reducedMotion ? { opacity: 1 } : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0, y: -6 }}
               transition={{ duration: 0.22 }}
               className="mt-3 text-center text-xs italic text-[#F7E7CE]/85 px-3"
+              style={nepaliFont}
             >
               &ldquo;{selectedTag.note}&rdquo;
             </motion.p>
@@ -670,8 +692,8 @@ export function BangkokSaganSection({ reducedMotion = false }) {
               <p className="mt-0.5 text-[11px] text-[#F7E7CE]/75">
                 {sagan.accountHolder}
               </p>
-              <p className="mt-1 text-[10px] text-[#D4AF37]/80">
-                {sagan.bankNote}
+              <p className="mt-1 text-[10px] text-[#D4AF37]/80" style={nepaliFont}>
+                {t.bankNote}
               </p>
             </div>
           </div>
@@ -688,10 +710,11 @@ export function BangkokSaganSection({ reducedMotion = false }) {
             style={{
               background:
                 'linear-gradient(135deg, #FFF4D4 0%, #E7C45A 48%, #C69823 100%)',
+              ...nepaliFont,
             }}
           >
             <Download className="w-4 h-4 shrink-0" />
-            <span>Save QR to Gallery</span>
+            <span>{t.saveQrBtn}</span>
           </motion.button>
 
           <motion.button
@@ -701,16 +724,17 @@ export function BangkokSaganSection({ reducedMotion = false }) {
             whileTap={reducedMotion ? {} : { scale: 0.96 }}
             data-testid="copy-payment-id-btn"
             className="flex items-center justify-center gap-2 rounded-xl border border-[#D4AF37]/70 bg-[#3D0814]/90 px-4 py-3.5 text-xs sm:text-[13px] font-semibold text-[#F7E7CE] cursor-pointer hover:bg-[#530C1A] transition-colors shadow-[0_8px_20px_rgba(0,0,0,0.32)]"
+            style={nepaliFont}
           >
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-[#F3D98B] shrink-0" />
-                <span className="text-[#FFF4D4]">ID Copied!</span>
+                <span className="text-[#FFF4D4]">{t.copiedBtn}</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4 text-[#D4AF37] shrink-0" />
-                <span>Copy eSewa / Fonepay ID</span>
+                <span>{t.copyIdBtn}</span>
               </>
             )}
           </motion.button>

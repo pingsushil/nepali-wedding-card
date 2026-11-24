@@ -3,29 +3,28 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Send, Sparkles, Quote, LayoutGrid, GalleryHorizontalEnd } from 'lucide-react';
 import { blessingStore } from '../utils/blessingStore';
 import { triggerMiniGoldPop } from '../utils/confetti';
+import { translations, localizeDigits } from '../data/translations';
 import { RoyalDivider } from './DhakaBorder';
-
-const QUICK_BLESSINGS = [
-  'Shubha Biwaha! Wishing you a lifetime of love & joy.',
-  'May your home always shine with warmth and prosperity. 🙏',
-  'Cannot wait to dance to the Panche Baja in Kathmandu!',
-];
 
 export function BlessingWall({
   initialGuestName = '',
   isPersonalized = false,
+  lang = 'en',
   reducedMotion = false,
 }) {
   const [blessings, setBlessings] = useState(() => blessingStore.getAll());
   const [name, setName] = useState(isPersonalized ? initialGuestName : '');
   const [relation, setRelation] = useState('');
   const [message, setMessage] = useState('');
-  const [viewMode, setViewMode] = useState('deck'); // 'deck' | 'grid'
+  const [viewMode, setViewMode] = useState('deck');
   const [justPostedId, setJustPostedId] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const submitBtnRef = useRef(null);
   const deckRef = useRef(null);
+
+  const t = translations[lang]?.blessings || translations.en.blessings;
+  const nepaliFont = lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,11 +32,11 @@ export function BlessingWall({
     const trimmedMessage = message.trim();
 
     if (!trimmedName) {
-      setErrorMsg('Please enter your name or family name.');
+      setErrorMsg(t.errName);
       return;
     }
     if (!trimmedMessage) {
-      setErrorMsg('Please write a brief wedding wish for the couple.');
+      setErrorMsg(t.errMessage);
       return;
     }
 
@@ -46,7 +45,7 @@ export function BlessingWall({
       name: trimmedName,
       relation,
       message: trimmedMessage,
-      tag: 'Guest Blessing',
+      tag: lang === 'ne' ? 'अतिथि शुभकामना' : 'Guest Blessing',
     });
 
     setBlessings(list);
@@ -54,12 +53,10 @@ export function BlessingWall({
     setMessage('');
     setRelation('');
 
-    // Scroll horizontal deck back to start so guest sees their new card immediately
     if (deckRef.current) {
       deckRef.current.scrollTo({ left: 0, behavior: reducedMotion ? 'auto' : 'smooth' });
     }
 
-    // Celebratory mini gold confetti pop
     let origin = { x: 0.5, y: 0.65 };
     if (submitBtnRef.current) {
       const rect = submitBtnRef.current.getBoundingClientRect();
@@ -90,16 +87,19 @@ export function BlessingWall({
           className="text-xs text-[#F3D98B]/90 tracking-wider mb-1"
           style={{ fontFamily: 'var(--font-nepali)' }}
         >
-          शुभकामना तथा आशीर्वाद भित्ता
+          {t.eyebrow}
         </p>
         <h2
-          className="text-gold-foil text-[34px] sm:text-[40px] font-semibold leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-gold-foil text-[32px] sm:text-[38px] font-semibold leading-tight"
+          style={{
+            fontFamily:
+              lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+          }}
         >
-          Wall of Blessings
+          {t.heading}
         </h2>
-        <p className="mt-1.5 text-xs text-[#F7E7CE]/78 max-w-xs mx-auto leading-relaxed">
-          Leave a warm wish or blessing for Aarav &amp; Prisha to cherish forever.
+        <p className="mt-1.5 text-xs text-[#F7E7CE]/78 max-w-xs mx-auto leading-relaxed" style={nepaliFont}>
+          {t.subtitle}
         </p>
         <RoyalDivider className="mt-5" />
       </motion.div>
@@ -116,22 +116,23 @@ export function BlessingWall({
           background:
             'linear-gradient(155deg, rgba(107, 15, 26, 0.36) 0%, rgba(36, 4, 11, 0.88) 100%)',
           boxShadow: '0 12px 30px rgba(0, 0, 0, 0.36)',
+          ...nepaliFont,
         }}
       >
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label
               htmlFor="blessing-name"
-              className="block text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B] mb-1.5"
+              className="block text-[10.5px] uppercase tracking-[0.16em] text-[#F3D98B] mb-1.5"
             >
-              Your Name / Family
+              {t.nameLabel}
             </label>
             <input
               id="blessing-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sharma Family"
+              placeholder={t.namePlaceholder}
               maxLength={64}
               className="w-full rounded-xl border border-[#D4AF37]/35 bg-[#22040B]/80 px-3.5 py-2.5 text-sm text-[#FDF8F0] placeholder:text-[#F7E7CE]/38 focus:border-[#F3D98B] focus:outline-none transition-colors"
             />
@@ -140,16 +141,16 @@ export function BlessingWall({
           <div>
             <label
               htmlFor="blessing-relation"
-              className="block text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B] mb-1.5"
+              className="block text-[10.5px] uppercase tracking-[0.16em] text-[#F3D98B] mb-1.5"
             >
-              City or Relation (Optional)
+              {t.relationLabel}
             </label>
             <input
               id="blessing-relation"
               type="text"
               value={relation}
               onChange={(e) => setRelation(e.target.value)}
-              placeholder="e.g. Kathmandu • Uncle"
+              placeholder={t.relationPlaceholder}
               maxLength={48}
               className="w-full rounded-xl border border-[#D4AF37]/35 bg-[#22040B]/80 px-3.5 py-2.5 text-sm text-[#FDF8F0] placeholder:text-[#F7E7CE]/38 focus:border-[#F3D98B] focus:outline-none transition-colors"
             />
@@ -159,16 +160,16 @@ export function BlessingWall({
         <div className="mt-3">
           <label
             htmlFor="blessing-message"
-            className="block text-[10.5px] uppercase tracking-[0.18em] text-[#F3D98B] mb-1.5"
+            className="block text-[10.5px] uppercase tracking-[0.16em] text-[#F3D98B] mb-1.5"
           >
-            Your Wedding Blessing
+            {t.messageLabel}
           </label>
           <textarea
             id="blessing-message"
             rows={3}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Write a heartfelt wish for Aarav & Prisha..."
+            placeholder={t.messagePlaceholder}
             maxLength={280}
             className="w-full resize-none rounded-xl border border-[#D4AF37]/35 bg-[#22040B]/80 px-3.5 py-2.5 text-sm text-[#FDF8F0] placeholder:text-[#F7E7CE]/38 focus:border-[#F3D98B] focus:outline-none transition-colors"
           />
@@ -176,7 +177,7 @@ export function BlessingWall({
 
         {/* One-tap quick wish starters */}
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {QUICK_BLESSINGS.map((starter, idx) => (
+          {t.quickStarters.map((starter, idx) => (
             <button
               key={idx}
               type="button"
@@ -205,16 +206,17 @@ export function BlessingWall({
           }}
         >
           <Send className="w-4 h-4" />
-          <span>Send Blessing to the Wall</span>
+          <span>{t.submitBtn}</span>
         </motion.button>
       </motion.form>
 
       {/* Deck / Masonry Controls */}
-      <div className="mt-7 mb-3 flex items-center justify-between px-1">
+      <div className="mt-7 mb-3 flex items-center justify-between px-1" style={nepaliFont}>
         <div className="flex items-center gap-1.5 text-xs text-[#F7E7CE]/85">
           <Heart className="w-3.5 h-3.5 text-[#D4AF37] fill-[#D4AF37]/40" />
           <span>
-            <strong className="text-[#FFF4D4]">{blessings.length}</strong> Blessings Shared
+            <strong className="text-[#FFF4D4]">{localizeDigits(blessings.length, lang)}</strong>{' '}
+            {t.sharedLabel}
           </span>
         </div>
 
@@ -229,7 +231,7 @@ export function BlessingWall({
             }`}
           >
             <GalleryHorizontalEnd className="w-3 h-3" />
-            <span>Deck</span>
+            <span>{t.deckBtn}</span>
           </button>
           <button
             type="button"
@@ -241,12 +243,12 @@ export function BlessingWall({
             }`}
           >
             <LayoutGrid className="w-3 h-3" />
-            <span>Wall</span>
+            <span>{t.wallBtn}</span>
           </button>
         </div>
       </div>
 
-      {/* Stylized Floating Blessing Cards (Horizontal Snap Deck or Masonry-style Stack) */}
+      {/* Stylized Floating Blessing Cards */}
       <div
         ref={deckRef}
         className={
@@ -295,9 +297,12 @@ export function BlessingWall({
                 <div className="flex items-start justify-between gap-2 mb-2.5">
                   <Quote className="w-4 h-4 text-[#D4AF37]/75 shrink-0" />
                   {isHighlighted && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#D4AF37]/20 border border-[#F3D98B]/50 px-2 py-0.5 text-[10px] font-medium text-[#FFF4D4]">
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-[#D4AF37]/20 border border-[#F3D98B]/50 px-2 py-0.5 text-[10px] font-medium text-[#FFF4D4]"
+                      style={nepaliFont}
+                    >
                       <Sparkles className="w-2.5 h-2.5" />
-                      Just Added
+                      {t.justAdded}
                     </span>
                   )}
                 </div>
@@ -334,8 +339,11 @@ export function BlessingWall({
       </div>
 
       {viewMode === 'deck' && (
-        <p className="mt-1 text-center text-[10.5px] tracking-[0.16em] uppercase text-[#F7E7CE]/55">
-          Swipe cards to read more blessings →
+        <p
+          className="mt-1 text-center text-[10.5px] tracking-[0.14em] uppercase text-[#F7E7CE]/55"
+          style={nepaliFont}
+        >
+          {t.swipeHint}
         </p>
       )}
     </section>

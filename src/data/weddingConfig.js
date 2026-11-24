@@ -16,14 +16,16 @@ export const weddingConfig = {
     blessingVerse: 'Two souls united by tradition, blessed by elders, bound forever in love.',
   },
 
-  // Couple details
+  // Couple details (replace public/groom-sample.jpg and public/bride-sample.jpg with your photos)
   couple: {
     groomFirst: 'Aarav',
     groomFull: 'Aarav Bikram Shah',
     groomNepali: 'आरव विक्रम शाह',
+    groomPhoto: '/groom-sample.jpg',
     brideFirst: 'Prisha',
     brideFull: 'Prisha Rajbhandari',
     brideNepali: 'प्रिशा राजभण्डारी',
+    bridePhoto: '/bride-sample.jpg',
     monogram: 'A & P',
     hashtag: '#AaravWedsPrisha',
     city: 'Kathmandu, Nepal',

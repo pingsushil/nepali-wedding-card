@@ -5,6 +5,7 @@ import { weddingConfig } from '../data/weddingConfig';
  * - `guestName`: personalized guest name from `?guest=` (safe fallback)
  * - `isPersonalized`: whether a custom `?guest=` query param was provided
  * - `isShareMode`: whether Host Share Studio should render (`?mode=share` or `#/share`)
+ * - `urlLang`: optional language override (`?lang=ne` or `?lang=en`)
  */
 export function parseInviteRoute(loc = window.location) {
   const params = new URLSearchParams(loc.search);
@@ -17,11 +18,15 @@ export function parseInviteRoute(loc = window.location) {
   const normalizedHash = (loc.hash || '').toLowerCase().replace(/\/+$/, '');
   const isShareMode = mode === 'share' || normalizedHash === '#/share';
 
+  const rawLang = (params.get('lang') || '').toLowerCase();
+  const urlLang = rawLang === 'ne' || rawLang === 'en' ? rawLang : null;
+
   return {
     guestName: cleanedGuest || weddingConfig.entrance.defaultGuestName,
     rawGuestName: cleanedGuest,
     isPersonalized: Boolean(cleanedGuest),
     isShareMode,
+    urlLang,
   };
 }
 

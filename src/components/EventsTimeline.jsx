@@ -10,9 +10,11 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations } from '../data/translations';
 import { RoyalDivider } from './DhakaBorder';
 
-function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
+function EventCard({ event, localizedEvent, t, lang, index, isExpanded, onToggle, reducedMotion }) {
+  const nepaliFont = lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined;
   return (
     <motion.article
       initial={reducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 32, scale: 0.98 }}
@@ -79,16 +81,21 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
                     fontFamily: 'var(--font-nepali)',
                   }}
                 >
-                  {event.nepaliTitle}
+                  {lang === 'ne' ? event.title : event.nepaliTitle}
                 </span>
 
                 <h3
-                  className="mt-2 text-[25px] sm:text-[28px] font-semibold leading-tight text-[#FDF8F0] group-hover:text-[#F7E7CE] transition-colors"
-                  style={{ fontFamily: 'var(--font-display)' }}
+                  className="mt-2 text-[24px] sm:text-[27px] font-semibold leading-tight text-[#FDF8F0] group-hover:text-[#F7E7CE] transition-colors"
+                  style={{
+                    fontFamily:
+                      lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+                  }}
                 >
-                  {event.title}
+                  {localizedEvent.title}
                 </h3>
-                <p className="mt-0.5 text-xs text-[#F7E7CE]/75">{event.subtitle}</p>
+                <p className="mt-0.5 text-xs text-[#F7E7CE]/75" style={nepaliFont}>
+                  {localizedEvent.subtitle}
+                </p>
               </div>
 
               <motion.span
@@ -102,35 +109,35 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
           </button>
 
           {/* Dates (BS + AD), Time, Dress Code & Venue */}
-          <div className="mt-4 space-y-2.5 text-[13px] text-[#FDF8F0]/90">
+          <div className="mt-4 space-y-2.5 text-[13px] text-[#FDF8F0]/90" style={nepaliFont}>
             <div className="flex items-start gap-2.5">
               <Calendar className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
               <div className="leading-snug">
-                <p className="font-semibold text-[#FFF4D4]">{event.bsDate}</p>
-                <p className="text-xs text-[#F7E7CE]/75">{event.adDate}</p>
+                <p className="font-semibold text-[#FFF4D4]">{localizedEvent.bsDate}</p>
+                <p className="text-xs text-[#F7E7CE]/75">{localizedEvent.adDate}</p>
               </div>
             </div>
 
             <div className="flex items-start gap-2.5">
               <Clock className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
-              <p className="leading-snug">{event.time}</p>
+              <p className="leading-snug">{localizedEvent.time}</p>
             </div>
 
             <div className="flex items-start gap-2.5">
               <Shirt className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
               <p className="leading-snug text-[#F7E7CE]/90">
                 <span className="text-[11px] uppercase tracking-wider text-[#D4AF37] mr-1.5">
-                  Attire:
+                  {t.attireLabel}
                 </span>
-                {event.dressCode}
+                {localizedEvent.dressCode}
               </p>
             </div>
 
             <div className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
               <div className="leading-snug">
-                <p className="font-medium text-[#FDF8F0]">{event.venueName}</p>
-                <p className="text-xs text-[#F7E7CE]/70">{event.venueAddress}</p>
+                <p className="font-medium text-[#FDF8F0]">{localizedEvent.venueName}</p>
+                <p className="text-xs text-[#F7E7CE]/70">{localizedEvent.venueAddress}</p>
               </div>
             </div>
           </div>
@@ -146,16 +153,16 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
                 transition={{ duration: reducedMotion ? 0.01 : 0.34, ease: [0.22, 1, 0.36, 1] }}
                 className="overflow-hidden"
               >
-                <div className="mt-4 pt-3.5 border-t border-[#D4AF37]/25">
+                <div className="mt-4 pt-3.5 border-t border-[#D4AF37]/25" style={nepaliFont}>
                   <p className="text-xs italic text-[#F7E7CE]/85 leading-relaxed mb-3">
-                    &ldquo;{event.note}&rdquo;
+                    &ldquo;{localizedEvent.note}&rdquo;
                   </p>
-                  <p className="text-[10.5px] uppercase tracking-[0.2em] text-[#D4AF37] mb-2 flex items-center gap-1.5">
+                  <p className="text-[10.5px] uppercase tracking-[0.18em] text-[#D4AF37] mb-2 flex items-center gap-1.5">
                     <Sparkles className="w-3 h-3" />
-                    Ceremony Highlights
+                    {t.highlightsLabel}
                   </p>
                   <ul className="space-y-1.5">
-                    {event.highlights.map((item, i) => (
+                    {localizedEvent.highlights.map((item, i) => (
                       <li
                         key={i}
                         className="flex items-start gap-2 text-xs text-[#FDF8F0]/85 leading-relaxed"
@@ -178,9 +185,10 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
             <button
               type="button"
               onClick={onToggle}
-              className="text-[11px] uppercase tracking-[0.16em] text-[#F3D98B]/90 hover:text-[#FFF4D4] cursor-pointer py-1"
+              className="text-[11px] uppercase tracking-[0.14em] text-[#F3D98B]/90 hover:text-[#FFF4D4] cursor-pointer py-1"
+              style={nepaliFont}
             >
-              {isExpanded ? 'Hide Details' : 'Ceremony Details'}
+              {isExpanded ? t.hideDetails : t.showDetails}
             </button>
 
             <motion.a
@@ -189,9 +197,10 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
               rel="noopener noreferrer"
               whileTap={reducedMotion ? {} : { scale: 0.96 }}
               className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/60 bg-[#3D0814]/85 px-3.5 py-2 text-xs font-medium text-[#F7E7CE] shadow-[0_4px_14px_rgba(0,0,0,0.3)] hover:border-[#F3D98B] hover:text-[#FFF4D4] transition-colors"
+              style={nepaliFont}
             >
               <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>Open Venue in Maps</span>
+              <span>{t.openMaps}</span>
               <ExternalLink className="w-3 h-3 opacity-75" />
             </motion.a>
           </div>
@@ -201,12 +210,13 @@ function EventCard({ event, index, isExpanded, onToggle, reducedMotion }) {
   );
 }
 
-export function EventsTimeline({ reducedMotion = false }) {
+export function EventsTimeline({ lang = 'en', reducedMotion = false }) {
   const timelineRef = useRef(null);
-  // Keep Shubha Biwaha expanded initially so guests immediately see expandable richness
   const [expandedIds, setExpandedIds] = useState(() => ({
     'shubha-biwaha': true,
   }));
+
+  const t = translations[lang]?.timeline || translations.en.timeline;
 
   const { scrollYProgress } = useScroll({
     target: timelineRef,
@@ -243,29 +253,33 @@ export function EventsTimeline({ reducedMotion = false }) {
           className="text-xs text-[#F3D98B]/90 tracking-wider mb-1"
           style={{ fontFamily: 'var(--font-nepali)' }}
         >
-          वैवाहिक कार्यक्रम तालिका
+          {t.eyebrowNepali}
         </p>
         <h2
-          className="text-gold-foil text-[34px] sm:text-[40px] font-semibold leading-tight"
-          style={{ fontFamily: 'var(--font-display)' }}
+          className="text-gold-foil text-[32px] sm:text-[38px] font-semibold leading-tight"
+          style={{
+            fontFamily:
+              lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+          }}
         >
-          Wedding Celebrations
+          {t.heading}
         </h2>
-        <p className="mt-1.5 text-xs uppercase tracking-[0.2em] text-[#F7E7CE]/75">
-          {weddingConfig.weddingDate.dateRangeSummary}
+        <p
+          className="mt-1.5 text-xs uppercase tracking-[0.18em] text-[#F7E7CE]/75"
+          style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+        >
+          {t.dateRange}
         </p>
         <RoyalDivider className="mt-5" />
       </motion.div>
 
       {/* Scroll-Driven Glowing Vertical Gold Timeline */}
       <div ref={timelineRef} className="relative">
-        {/* Static muted background spine */}
         <div
           aria-hidden="true"
           className="absolute left-[19px] top-4 bottom-4 w-[2px] rounded-full bg-[#D4AF37]/20"
         />
 
-        {/* Scroll-animated glowing gold foreground spine (GPU scaleY) */}
         <motion.div
           aria-hidden="true"
           className="absolute left-[19px] top-4 bottom-4 w-[2px] rounded-full origin-top"
@@ -282,6 +296,9 @@ export function EventsTimeline({ reducedMotion = false }) {
             <EventCard
               key={event.id}
               event={event}
+              localizedEvent={t.events[event.id] || event}
+              t={t}
+              lang={lang}
               index={index}
               isExpanded={Boolean(expandedIds[event.id])}
               onToggle={() => toggleEvent(event.id)}

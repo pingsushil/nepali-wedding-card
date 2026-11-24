@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CalendarHeart, ChevronDown, Sparkles } from 'lucide-react';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations, localizeDigits } from '../data/translations';
 import { DhakaBorder, RoyalDivider } from './DhakaBorder';
 import { HeroKalashMandala } from './RoyalMandala';
+import { CouplePortraits } from './CouplePortraits';
 
 function getTimeRemaining(targetIso) {
   const targetMs = new Date(targetIso).getTime();
@@ -21,7 +23,8 @@ function getTimeRemaining(targetIso) {
   };
 }
 
-function FlipDigitCell({ value, label, reducedMotion }) {
+function FlipDigitCell({ value, label, lang, reducedMotion }) {
+  const displayVal = localizeDigits(value, lang);
   return (
     <div
       className="relative flex flex-col items-center justify-center rounded-2xl border border-[#D4AF37]/45 px-2 py-3 overflow-hidden"
@@ -41,7 +44,7 @@ function FlipDigitCell({ value, label, reducedMotion }) {
       <div className="relative h-9 sm:h-10 w-full flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.span
-            key={value}
+            key={displayVal}
             initial={
               reducedMotion
                 ? { opacity: 0.9 }
@@ -57,25 +60,41 @@ function FlipDigitCell({ value, label, reducedMotion }) {
               duration: reducedMotion ? 0.01 : 0.34,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="text-gold-foil text-[28px] sm:text-[32px] font-semibold leading-none tabular-nums"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-gold-foil text-[26px] sm:text-[31px] font-semibold leading-none tabular-nums"
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            {value}
+            {displayVal}
           </motion.span>
         </AnimatePresence>
       </div>
 
-      <span className="mt-1 text-[10px] uppercase tracking-[0.2em] text-[#F7E7CE]/75 font-medium">
+      <span
+        className="mt-1 text-[10px] uppercase tracking-[0.16em] text-[#F7E7CE]/75 font-medium"
+        style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+      >
         {label}
       </span>
     </div>
   );
 }
 
-export function HeroSection({ guestName, isRevealed = false, reducedMotion = false }) {
+export function HeroSection({
+  guestName,
+  isPersonalized = false,
+  lang = 'en',
+  isRevealed = false,
+  reducedMotion = false,
+}) {
   const [countdown, setCountdown] = useState(() =>
     getTimeRemaining(weddingConfig.weddingDate.isoTarget)
   );
+
+  const t = translations[lang]?.hero || translations.en.hero;
+  const doorsT = translations[lang]?.doors || translations.en.doors;
+  const displayGuest = isPersonalized ? guestName : doorsT.defaultGuest;
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -109,7 +128,7 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
       {/* Top Royal Dhaka Ribbon */}
       <DhakaBorder height={16} opacity={0.85} />
 
-      <div className="mx-auto w-full max-w-lg px-5 pt-9 text-center">
+      <div className="mx-auto w-full max-w-lg px-5 pt-13 text-center">
         {/* Auspicious Mantra */}
         <motion.p
           {...springItem(0.05)}
@@ -130,8 +149,11 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
           >
             {weddingConfig.ceremonyHeader.nepaliTitle}
           </h1>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.26em] text-[#F7E7CE]/80">
-            {weddingConfig.ceremonyHeader.englishEyebrow}
+          <p
+            className="mt-1 text-[11px] uppercase tracking-[0.22em] text-[#F7E7CE]/80"
+            style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+          >
+            {t.eyebrow}
           </p>
         </motion.div>
 
@@ -139,8 +161,12 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
         <motion.div {...springItem(0.32)} className="mt-5 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/45 bg-[#2A040C]/70 px-4 py-1.5 backdrop-blur-xs shadow-[0_6px_20px_rgba(0,0,0,0.28)]">
             <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
-            <span className="text-xs text-[#F7E7CE] tracking-wide">
-              Honoring <strong className="font-semibold text-[#FFF4D4]">{guestName}</strong>
+            <span
+              className="text-xs text-[#F7E7CE] tracking-wide"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.honoringPrefix}{' '}
+              <strong className="font-semibold text-[#FFF4D4]">{displayGuest}</strong>
             </span>
           </div>
         </motion.div>
@@ -149,8 +175,9 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
         <motion.p
           {...springItem(0.4)}
           className="mt-5 text-[13.5px] leading-relaxed text-[#FDF8F0]/85 max-w-md mx-auto"
+          style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
         >
-          {weddingConfig.families.formalInvitationLine}
+          {t.formalLine}
         </motion.p>
 
         {/* Staggered Family Lineage Cards (Groom Side & Bride Side) */}
@@ -164,26 +191,38 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
                 'linear-gradient(155deg, rgba(107, 15, 26, 0.44) 0%, rgba(44, 5, 14, 0.72) 100%)',
             }}
           >
-            <span className="inline-block rounded-full border border-[#D4AF37]/40 bg-[#3D0814]/80 px-3 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[#F3D98B]">
-              {weddingConfig.families.groomSide.badge} •{' '}
-              <span style={{ fontFamily: 'var(--font-nepali)' }}>
-                {weddingConfig.families.groomSide.nepaliBadge}
-              </span>
+            <span
+              className="inline-block rounded-full border border-[#D4AF37]/40 bg-[#3D0814]/80 px-3 py-0.5 text-[10px] uppercase tracking-[0.16em] text-[#F3D98B]"
+              style={{ fontFamily: 'var(--font-nepali)' }}
+            >
+              {t.groomBadge}
             </span>
-            <p className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-[#F7E7CE]/70">
-              {weddingConfig.families.groomSide.parentsLabel}
+            <p
+              className="mt-2.5 text-[11px] uppercase tracking-[0.16em] text-[#F7E7CE]/70"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.groomParentsLabel}
             </p>
             <p
-              className="mt-1 text-[19px] sm:text-[21px] font-semibold text-[#FDF8F0] leading-snug"
-              style={{ fontFamily: 'var(--font-display)' }}
+              className="mt-1 text-[18px] sm:text-[20px] font-semibold text-[#FDF8F0] leading-snug"
+              style={{
+                fontFamily:
+                  lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+              }}
             >
-              {weddingConfig.families.groomSide.parents}
+              {t.groomParents}
             </p>
-            <p className="mt-1 text-xs text-[#F7E7CE]/75 leading-relaxed">
-              {weddingConfig.families.groomSide.grandparents}
+            <p
+              className="mt-1 text-xs text-[#F7E7CE]/75 leading-relaxed"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.groomGrandparents}
             </p>
-            <p className="mt-1 text-[11px] text-[#D4AF37]/90 tracking-wider uppercase">
-              {weddingConfig.families.groomSide.residence}
+            <p
+              className="mt-1 text-[11px] text-[#D4AF37]/90 tracking-wider uppercase"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.groomResidence}
             </p>
           </motion.div>
 
@@ -196,26 +235,38 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
                 'linear-gradient(155deg, rgba(107, 15, 26, 0.44) 0%, rgba(44, 5, 14, 0.72) 100%)',
             }}
           >
-            <span className="inline-block rounded-full border border-[#D4AF37]/40 bg-[#3D0814]/80 px-3 py-0.5 text-[10px] uppercase tracking-[0.2em] text-[#F3D98B]">
-              {weddingConfig.families.brideSide.badge} •{' '}
-              <span style={{ fontFamily: 'var(--font-nepali)' }}>
-                {weddingConfig.families.brideSide.nepaliBadge}
-              </span>
+            <span
+              className="inline-block rounded-full border border-[#D4AF37]/40 bg-[#3D0814]/80 px-3 py-0.5 text-[10px] uppercase tracking-[0.16em] text-[#F3D98B]"
+              style={{ fontFamily: 'var(--font-nepali)' }}
+            >
+              {t.brideBadge}
             </span>
-            <p className="mt-2.5 text-[11px] uppercase tracking-[0.18em] text-[#F7E7CE]/70">
-              {weddingConfig.families.brideSide.parentsLabel}
+            <p
+              className="mt-2.5 text-[11px] uppercase tracking-[0.16em] text-[#F7E7CE]/70"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.brideParentsLabel}
             </p>
             <p
-              className="mt-1 text-[19px] sm:text-[21px] font-semibold text-[#FDF8F0] leading-snug"
-              style={{ fontFamily: 'var(--font-display)' }}
+              className="mt-1 text-[18px] sm:text-[20px] font-semibold text-[#FDF8F0] leading-snug"
+              style={{
+                fontFamily:
+                  lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+              }}
             >
-              {weddingConfig.families.brideSide.parents}
+              {t.brideParents}
             </p>
-            <p className="mt-1 text-xs text-[#F7E7CE]/75 leading-relaxed">
-              {weddingConfig.families.brideSide.grandparents}
+            <p
+              className="mt-1 text-xs text-[#F7E7CE]/75 leading-relaxed"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.brideGrandparents}
             </p>
-            <p className="mt-1 text-[11px] text-[#D4AF37]/90 tracking-wider uppercase">
-              {weddingConfig.families.brideSide.residence}
+            <p
+              className="mt-1 text-[11px] text-[#D4AF37]/90 tracking-wider uppercase"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.brideResidence}
             </p>
           </motion.div>
         </div>
@@ -225,62 +276,85 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
           <RoyalDivider className="mb-6" />
 
           <h2
-            className="text-gold-foil text-[48px] sm:text-[56px] font-semibold leading-[1.04] tracking-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-gold-foil text-[46px] sm:text-[56px] font-semibold leading-[1.08] tracking-tight"
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            {weddingConfig.couple.groomFirst}
+            {t.coupleGroomFirst}
           </h2>
 
           <div className="my-1.5 flex items-center justify-center gap-3">
             <span className="h-[1px] w-10 bg-gradient-to-r from-transparent to-[#D4AF37]/75" />
             <span
               className="italic text-2xl text-[#F7E7CE]"
-              style={{ fontFamily: 'var(--font-display)' }}
+              style={{
+                fontFamily:
+                  lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+              }}
             >
-              &amp;
+              {lang === 'ne' ? 'र' : '&'}
             </span>
             <span className="h-[1px] w-10 bg-gradient-to-l from-transparent to-[#D4AF37]/75" />
           </div>
 
           <h2
-            className="text-gold-foil text-[48px] sm:text-[56px] font-semibold leading-[1.04] tracking-tight"
-            style={{ fontFamily: 'var(--font-display)' }}
+            className="text-gold-foil text-[46px] sm:text-[56px] font-semibold leading-[1.08] tracking-tight"
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            {weddingConfig.couple.brideFirst}
+            {t.coupleBrideFirst}
           </h2>
 
           <p
             className="mt-3 text-xs tracking-wider text-[#F7E7CE]/80"
             style={{ fontFamily: 'var(--font-nepali)' }}
           >
-            {weddingConfig.couple.groomNepali} &nbsp;✦&nbsp; {weddingConfig.couple.brideNepali}
+            {lang === 'ne'
+              ? `${weddingConfig.couple.groomFull}  ✦  ${weddingConfig.couple.brideFull}`
+              : `${weddingConfig.couple.groomNepali}  ✦  ${weddingConfig.couple.brideNepali}`}
           </p>
 
+          {/* Groom & Bride Royal Arched Sample Portraits */}
+          <CouplePortraits lang={lang} reducedMotion={reducedMotion} />
+
           {/* Auspicious Date Highlight Strip */}
-          <div className="mt-5 inline-flex flex-col items-center rounded-2xl border border-[#D4AF37]/40 bg-[#2A040C]/65 px-5 py-3 backdrop-blur-xs">
-            <div className="flex items-center gap-2 text-[#F3D98B] text-xs font-medium tracking-[0.16em] uppercase">
+          <div className="mt-6 inline-flex flex-col items-center rounded-2xl border border-[#D4AF37]/40 bg-[#2A040C]/65 px-5 py-3 backdrop-blur-xs">
+            <div
+              className="flex items-center gap-2 text-[#F3D98B] text-xs font-medium tracking-[0.14em] uppercase"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
               <CalendarHeart className="w-3.5 h-3.5 text-[#D4AF37]" />
-              <span>{weddingConfig.weddingDate.bsFull}</span>
+              <span>{t.dateBs}</span>
             </div>
-            <p className="mt-1 text-xs text-[#FDF8F0]/85 tracking-wide">
-              {weddingConfig.weddingDate.adFull} • {weddingConfig.couple.city}
+            <p
+              className="mt-1 text-xs text-[#FDF8F0]/85 tracking-wide"
+              style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+            >
+              {t.dateAdCity}
             </p>
           </div>
         </motion.div>
 
         {/* Live Animated Wedding Countdown Timer */}
         <motion.div {...springItem(0.88)} className="mt-7">
-          <p className="text-[10.5px] uppercase tracking-[0.26em] text-[#F3D98B]/90 mb-3">
-            {countdown.isPast ? 'The Celebrations Have Begun' : 'Counting Down to Shubha Biwaha'}
+          <p
+            className="text-[10.5px] uppercase tracking-[0.22em] text-[#F3D98B]/90 mb-3"
+            style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+          >
+            {countdown.isPast ? t.countdownPast : t.countdownHeading}
           </p>
           <div
             className="grid grid-cols-4 gap-2.5 max-w-[360px] mx-auto"
             aria-label="Wedding countdown timer"
           >
-            <FlipDigitCell value={countdown.days} label="Days" reducedMotion={reducedMotion} />
-            <FlipDigitCell value={countdown.hours} label="Hours" reducedMotion={reducedMotion} />
-            <FlipDigitCell value={countdown.minutes} label="Mins" reducedMotion={reducedMotion} />
-            <FlipDigitCell value={countdown.seconds} label="Secs" reducedMotion={reducedMotion} />
+            <FlipDigitCell value={countdown.days} label={t.days} lang={lang} reducedMotion={reducedMotion} />
+            <FlipDigitCell value={countdown.hours} label={t.hours} lang={lang} reducedMotion={reducedMotion} />
+            <FlipDigitCell value={countdown.minutes} label={t.mins} lang={lang} reducedMotion={reducedMotion} />
+            <FlipDigitCell value={countdown.seconds} label={t.secs} lang={lang} reducedMotion={reducedMotion} />
           </div>
         </motion.div>
 
@@ -290,8 +364,11 @@ export function HeroSection({ guestName, isRevealed = false, reducedMotion = fal
           {...springItem(1.0)}
           className="mt-9 inline-flex flex-col items-center gap-1 text-[#F7E7CE]/75 hover:text-[#F3D98B] transition-colors"
         >
-          <span className="text-[10px] uppercase tracking-[0.24em]">
-            Explore Ceremonies
+          <span
+            className="text-[10px] uppercase tracking-[0.2em]"
+            style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+          >
+            {t.exploreCta}
           </span>
           <motion.span
             animate={reducedMotion ? {} : { y: [0, 5, 0] }}

@@ -4,6 +4,7 @@ import { parseInviteRoute, buildPersonalizedInviteUrl } from './utils/urlParams'
 import { RoyalDoors } from './components/RoyalDoors';
 import { AmbientCanvas } from './components/AmbientCanvas';
 import { AudioController } from './components/AudioController';
+import { LanguageToggle } from './components/LanguageToggle';
 import { HeroSection } from './components/HeroSection';
 import { EventsTimeline } from './components/EventsTimeline';
 import { BangkokSaganSection } from './components/BangkokSaganSection';
@@ -11,19 +12,46 @@ import { BlessingWall } from './components/BlessingWall';
 import { FooterSection } from './components/FooterSection';
 import { ShareStudio } from './components/ShareStudio';
 
+const LANG_STORAGE_KEY = 'nepali_wedding_lang_v1';
+
+function getInitialLang(urlLang) {
+  if (urlLang === 'ne' || urlLang === 'en') return urlLang;
+  try {
+    const saved = window.localStorage.getItem(LANG_STORAGE_KEY);
+    if (saved === 'ne' || saved === 'en') return saved;
+  } catch {
+    // Ignore restricted storage
+  }
+  return 'en';
+}
+
 export default function App() {
   const prefersReduced = useReducedMotion();
   const reducedMotion = Boolean(prefersReduced);
 
   const [route, setRoute] = useState(() => parseInviteRoute());
+  const [lang, setLang] = useState(() => getInitialLang(parseInviteRoute().urlLang));
   const [hasBegunReveal, setHasBegunReveal] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const audioRef = useRef(null);
 
+  const handleLanguageChange = (nextLang) => {
+    setLang(nextLang);
+    try {
+      window.localStorage.setItem(LANG_STORAGE_KEY, nextLang);
+    } catch {
+      // Ignore restricted storage
+    }
+  };
+
   // Sync URL/hash navigation (e.g., entering or leaving #/share or ?mode=share)
   useEffect(() => {
-    const syncRoute = () => setRoute(parseInviteRoute());
+    const syncRoute = () => {
+      const next = parseInviteRoute();
+      setRoute(next);
+      if (next.urlLang) setLang(next.urlLang);
+    };
     window.addEventListener('popstate', syncRoute);
     window.addEventListener('hashchange', syncRoute);
     return () => {
@@ -48,7 +76,7 @@ export default function App() {
 
   const handleBeginOpen = () => {
     setHasBegunReveal(true);
-    // Attempt background music playback inside the user gesture
+    // Attempt background Nepali Mangal Dhun playback inside the user tap gesture
     audioRef.current?.attemptAutoplay();
   };
 
@@ -68,7 +96,12 @@ export default function App() {
   if (route.isShareMode) {
     return (
       <MotionConfig reducedMotion="user">
-        <ShareStudio onExitToPreview={handleExitShareStudio} />
+        <LanguageToggle
+          lang={lang}
+          onChange={handleLanguageChange}
+          reducedMotion={reducedMotion}
+        />
+        <ShareStudio lang={lang} onExitToPreview={handleExitShareStudio} />
       </MotionConfig>
     );
   }
@@ -85,14 +118,23 @@ export default function App() {
         {/* Lightweight Continuous Golden Bokeh & Marigold Petals Canvas (<= 28 particles) */}
         <AmbientCanvas visible={hasBegunReveal} reducedMotion={reducedMotion} />
 
-        {/* Sleek Floating Gold Audio Controller (top-right corner) */}
-        <AudioController ref={audioRef} visible={hasBegunReveal} />
+        {/* Floating Top-Left Language Switch (EN | नेपाली) */}
+        <LanguageToggle
+          lang={lang}
+          onChange={handleLanguageChange}
+          reducedMotion={reducedMotion}
+        />
+
+        {/* Floating Top-Right Gold Music Play/Pause Button (Nepali Mangal Dhun / custom MP3) */}
+        <AudioController ref={audioRef} visible={hasBegunReveal} lang={lang} />
 
         {/* Pre-Open Luxury Entrance: 3D Royal Nepali Double Doors */}
         <AnimatePresence>
           {!isUnlocked && (
             <RoyalDoors
               guestName={route.guestName}
+              isPersonalized={route.isPersonalized}
+              lang={lang}
               onBeginOpen={handleBeginOpen}
               onOpened={handleDoorsOpened}
               reducedMotion={reducedMotion}
@@ -108,21 +150,24 @@ export default function App() {
         >
           <HeroSection
             guestName={route.guestName}
+            isPersonalized={route.isPersonalized}
+            lang={lang}
             isRevealed={hasBegunReveal}
             reducedMotion={reducedMotion}
           />
 
-          <EventsTimeline reducedMotion={reducedMotion} />
+          <EventsTimeline lang={lang} reducedMotion={reducedMotion} />
 
-          <BangkokSaganSection reducedMotion={reducedMotion} />
+          <BangkokSaganSection lang={lang} reducedMotion={reducedMotion} />
 
           <BlessingWall
             initialGuestName={route.rawGuestName}
             isPersonalized={route.isPersonalized}
+            lang={lang}
             reducedMotion={reducedMotion}
           />
 
-          <FooterSection reducedMotion={reducedMotion} />
+          <FooterSection lang={lang} reducedMotion={reducedMotion} />
         </main>
       </div>
     </MotionConfig>

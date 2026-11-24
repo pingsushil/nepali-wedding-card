@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations } from '../data/translations';
 import { DhakaBorder } from './DhakaBorder';
 import { DoorHalfMandala } from './RoyalMandala';
 import { triggerWaxSealBurst } from '../utils/confetti';
@@ -57,10 +58,19 @@ function DoorCornerFiligree({ flipX = false, flipY = false }) {
   );
 }
 
-export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = false }) {
+export function RoyalDoors({
+  guestName,
+  isPersonalized = false,
+  lang = 'en',
+  onBeginOpen,
+  onOpened,
+  reducedMotion = false,
+}) {
   // Phases: 'locked' -> 'seal-dissolving' -> 'doors-swinging'
   const [phase, setPhase] = useState('locked');
   const sealButtonRef = useRef(null);
+  const t = translations[lang]?.doors || translations.en.doors;
+  const displayGuest = isPersonalized ? guestName : t.defaultGuest;
 
   const handleOpenTap = () => {
     if (phase !== 'locked') return;
@@ -263,7 +273,7 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
 
       {/* ==================== TOP GLOWING GOLDEN CREST PLAQUE ==================== */}
       <motion.div
-        className="absolute top-[9%] sm:top-[10%] inset-x-0 z-20 flex flex-col items-center px-5 text-center pointer-events-none"
+        className="absolute top-[11%] sm:top-[12%] inset-x-0 z-20 flex flex-col items-center px-5 text-center pointer-events-none"
         initial={{ opacity: 0, y: -16 }}
         animate={
           isDissolvingOrSwinging
@@ -273,10 +283,13 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
       >
         <p
-          className="text-[#F7E7CE]/90 text-xs tracking-[0.26em] uppercase mb-2"
+          className="text-[#F7E7CE]/90 text-xs tracking-[0.22em] uppercase mb-2"
           style={{ fontFamily: 'var(--font-nepali)' }}
         >
-          {weddingConfig.ceremonyHeader.nepaliTitle} • {weddingConfig.couple.coupleNames || `${weddingConfig.couple.groomFirst} & ${weddingConfig.couple.brideFirst}`}
+          {weddingConfig.ceremonyHeader.nepaliTitle} •{' '}
+          {lang === 'ne'
+            ? `${weddingConfig.couple.groomNepali.split(' ')[0]} र ${weddingConfig.couple.brideNepali.split(' ')[0]}`
+            : `${weddingConfig.couple.groomFirst} & ${weddingConfig.couple.brideFirst}`}
         </p>
 
         {/* Illuminated Golden Crest Plaque */}
@@ -301,15 +314,21 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
 
           <h1
             className="text-gold-foil text-[22px] sm:text-[26px] font-semibold leading-snug tracking-wide break-words"
-            style={{ fontFamily: 'var(--font-display)' }}
+            style={{
+              fontFamily:
+                lang === 'ne' ? 'var(--font-nepali)' : 'var(--font-display)',
+            }}
           >
-            {weddingConfig.entrance.salutationPrefix} {guestName}
+            {t.salutationPrefix} {displayGuest}
           </h1>
 
           <div className="my-2 mx-auto w-16 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/80 to-transparent" />
 
-          <p className="text-[11px] sm:text-xs uppercase tracking-[0.22em] text-[#F7E7CE]/90 font-medium">
-            {weddingConfig.entrance.salutationSuffix}
+          <p
+            className="text-[11px] sm:text-xs uppercase tracking-[0.18em] text-[#F7E7CE]/90 font-medium"
+            style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+          >
+            {t.salutationSuffix}
           </p>
         </div>
       </motion.div>
@@ -382,11 +401,17 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
                 {weddingConfig.couple.monogram}
               </span>
               <span className="my-1 w-9 h-[1px] bg-[#3D0814]/45" />
-              <span className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-[0.14em] text-[#3D0814] leading-tight">
-                {weddingConfig.entrance.sealCtaPrimary}
+              <span
+                className="text-[9.5px] sm:text-[10px] font-bold uppercase tracking-[0.12em] text-[#3D0814] leading-tight"
+                style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+              >
+                {t.sealPrimary}
               </span>
-              <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-[#4E0E18] leading-tight mt-0.5">
-                {weddingConfig.entrance.sealCtaSecondary}
+              <span
+                className="text-[9px] font-semibold uppercase tracking-[0.14em] text-[#4E0E18] leading-tight mt-0.5"
+                style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+              >
+                {t.sealSecondary}
               </span>
             </span>
           </button>
@@ -401,9 +426,10 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
               : { opacity: 0.9, y: 0 }
           }
           transition={{ duration: 0.45, delay: isDissolvingOrSwinging ? 0 : 0.35 }}
-          className="mt-5 whitespace-nowrap text-center px-4 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#2A040C]/80 text-[10.5px] uppercase tracking-[0.22em] text-[#F7E7CE] backdrop-blur-xs pointer-events-none shadow-[0_6px_18px_rgba(0,0,0,0.45)]"
+          className="mt-5 whitespace-nowrap text-center px-4 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#2A040C]/80 text-[10.5px] uppercase tracking-[0.18em] text-[#F7E7CE] backdrop-blur-xs pointer-events-none shadow-[0_6px_18px_rgba(0,0,0,0.45)]"
+          style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
         >
-          Tap Wax Seal to Enter
+          {t.tapHint}
         </motion.p>
       </div>
 
@@ -413,8 +439,11 @@ export function RoyalDoors({ guestName, onBeginOpen, onOpened, reducedMotion = f
         animate={{ opacity: isDissolvingOrSwinging ? 0 : 0.85 }}
         transition={{ duration: 0.35 }}
       >
-        <p className="text-[11px] tracking-[0.2em] uppercase text-[#F7E7CE]/80 text-center">
-          {weddingConfig.weddingDate.bsFull} • {weddingConfig.couple.city}
+        <p
+          className="text-[11px] tracking-[0.18em] uppercase text-[#F7E7CE]/80 text-center"
+          style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+        >
+          {t.bottomDate}
         </p>
       </motion.div>
     </motion.div>

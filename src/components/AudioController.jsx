@@ -6,33 +6,37 @@ import React, {
   useState,
 } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music, VolumeX } from 'lucide-react';
+import { Music } from 'lucide-react';
 import { OPTIONAL_ASSETS } from 'virtual:optional-assets';
 import { weddingConfig } from '../data/weddingConfig';
+import { translations } from '../data/translations';
+import { NepaliWeddingSynth } from '../utils/nepaliWeddingAudio';
 
 /**
- * Floating Gold Audio Atmosphere Controller targeting `/wedding-theme.mp3`.
- * Gracefully stays silent with zero console errors when `/wedding-theme.mp3`
- * has not been placed in `public/` yet, and activates immediately once added.
+ * Floating Gold Audio Atmosphere Controller.
+ * - Uses `/wedding-theme.mp3` automatically whenever placed in `public/wedding-theme.mp3`.
+ * - Otherwise seamlessly plays the built-in Royal Nepali Mangal Dhun (Bansuri + Tanpura
+ *   + Santoor) Web Audio synthesizer so background music works immediately out of the box!
  */
 export const AudioController = forwardRef(function AudioController(
-  { visible = false },
+  { visible = false, lang = 'en' },
   ref
 ) {
   const audioRef = useRef(null);
+  const synthRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [audioAvailable, setAudioAvailable] = useState(OPTIONAL_ASSETS.hasAudio);
-  const [statusToast, setStatusToast] = useState('');
-  const toastTimerRef = useRef(null);
+  const [useCustomMp3, setUseCustomMp3] = useState(OPTIONAL_ASSETS.hasAudio);
 
-  const showNotice = (msg) => {
-    setStatusToast(msg);
-    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    toastTimerRef.current = window.setTimeout(() => setStatusToast(''), 2600);
-  };
+  const t = translations[lang]?.audio || translations.en.audio;
 
   useEffect(() => {
-    if (!OPTIONAL_ASSETS.hasAudio) return;
+    if (!OPTIONAL_ASSETS.hasAudio) {
+      synthRef.current = new NepaliWeddingSynth();
+      return () => {
+        synthRef.current?.destroy();
+        synthRef.current = null;
+      };
+    }
 
     const rawSrc = weddingConfig.audio.src || OPTIONAL_ASSETS.audioPath;
     const resolvedSrc = rawSrc.startsWith('http')
@@ -47,7 +51,11 @@ export const AudioController = forwardRef(function AudioController(
     const handlePause = () => setIsPlaying(false);
     const handlePlay = () => setIsPlaying(true);
     const handleError = () => {
-      setAudioAvailable(false);
+      // Gracefully fall back to built-in Mangal Dhun synth if custom MP3 fails
+      setUseCustomMp3(false);
+      if (!synthRef.current) {
+        synthRef.current = new NepaliWeddingSynth();
+      }
       setIsPlaying(false);
     };
 
@@ -64,48 +72,50 @@ export const AudioController = forwardRef(function AudioController(
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('error', handleError);
       audioRef.current = null;
+      synthRef.current?.destroy();
+      synthRef.current = null;
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-    };
-  }, []);
-
-  const attemptAutoplay = () => {
-    if (!audioAvailable || !audioRef.current) return;
-    const playPromise = audioRef.current.play();
-    if (playPromise && typeof playPromise.then === 'function') {
-      playPromise
-        .then(() => setIsPlaying(true))
-        .catch(() => {
-          // Browser blocked autoplay or missing codec — fail silently
-          setIsPlaying(false);
-        });
-    }
-  };
-
-  useImperativeHandle(ref, () => ({
-    attemptAutoplay,
-  }));
-
-  const handleToggle = () => {
-    if (!audioAvailable || !audioRef.current) {
-      showNotice('Place wedding-theme.mp3 in /public to enable music');
-      return;
-    }
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
+  const startPlayback = () => {
+    if (useCustomMp3 && audioRef.current) {
       const playPromise = audioRef.current.play();
       if (playPromise && typeof playPromise.then === 'function') {
         playPromise
           .then(() => setIsPlaying(true))
           .catch(() => setIsPlaying(false));
       }
+      return;
+    }
+
+    if (!synthRef.current) {
+      synthRef.current = new NepaliWeddingSynth();
+    }
+    synthRef.current
+      .play()
+      .then((ok) => {
+        if (ok) setIsPlaying(true);
+      })
+      .catch(() => setIsPlaying(false));
+  };
+
+  const stopPlayback = () => {
+    if (useCustomMp3 && audioRef.current) {
+      audioRef.current.pause();
+    }
+    synthRef.current?.pause();
+    setIsPlaying(false);
+  };
+
+  useImperativeHandle(ref, () => ({
+    attemptAutoplay: startPlayback,
+  }));
+
+  const handleToggle = () => {
+    if (isPlaying) {
+      stopPlayback();
+    } else {
+      startPlayback();
     }
   };
 
@@ -117,18 +127,23 @@ export const AudioController = forwardRef(function AudioController(
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="fixed top-3.5 right-3.5 z-40 flex flex-col items-end gap-2"
+          className="fixed top-3.5 right-3.5 z-[60] flex flex-col items-end gap-2"
         >
           <button
             type="button"
             onClick={handleToggle}
-            aria-label={isPlaying ? 'Pause wedding music' : 'Play wedding music'}
+            data-testid="music-toggle-btn"
+            aria-label={isPlaying ? t.pauseAria : t.playAria}
+            aria-pressed={isPlaying}
             title={weddingConfig.audio.title}
-            className="group relative flex items-center gap-1.5 rounded-full border border-[#D4AF37]/65 bg-[#3D0814]/82 px-2.5 py-1.5 text-[#F7E7CE] shadow-[0_8px_22px_rgba(0,0,0,0.42),0_0_14px_rgba(212,175,55,0.2)] backdrop-blur-md cursor-pointer active:scale-95 transition-transform"
+            className="group relative flex items-center gap-1.5 rounded-full border border-[#D4AF37]/65 bg-[#3D0814]/88 px-2.5 py-1.5 text-[#F7E7CE] shadow-[0_8px_22px_rgba(0,0,0,0.45),0_0_14px_rgba(212,175,55,0.22)] backdrop-blur-md cursor-pointer active:scale-95 transition-transform"
           >
             {isPlaying ? (
               <>
-                <span className="flex items-end gap-[2.5px] h-3.5 w-4 justify-center" aria-hidden="true">
+                <span
+                  className="flex items-end gap-[2.5px] h-3.5 w-4 justify-center"
+                  aria-hidden="true"
+                >
                   <span
                     className="eq-bar w-[2.5px] h-full rounded-full bg-[#F3D98B]"
                     style={{ '--eq-dur': '0.78s', '--eq-delay': '0s' }}
@@ -142,37 +157,25 @@ export const AudioController = forwardRef(function AudioController(
                     style={{ '--eq-dur': '0.88s', '--eq-delay': '0.08s' }}
                   />
                 </span>
-                <span className="text-[11px] font-medium tracking-[0.14em] uppercase text-[#F7E7CE]">
-                  Playing
+                <span
+                  className="text-[11px] font-medium tracking-[0.12em] uppercase text-[#FFF4D4]"
+                  style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+                >
+                  {t.playing}
                 </span>
               </>
             ) : (
               <>
-                {audioAvailable ? (
-                  <Music className="w-3.5 h-3.5 text-[#D4AF37]" />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5 text-[#D4AF37]/85" />
-                )}
-                <span className="text-[11px] font-medium tracking-[0.14em] uppercase text-[#F7E7CE]/90">
-                  Music
+                <Music className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span
+                  className="text-[11px] font-medium tracking-[0.12em] uppercase text-[#F7E7CE]/90"
+                  style={lang === 'ne' ? { fontFamily: 'var(--font-nepali)' } : undefined}
+                >
+                  {t.music}
                 </span>
               </>
             )}
           </button>
-
-          <AnimatePresence>
-            {statusToast && (
-              <motion.div
-                initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.96 }}
-                transition={{ duration: 0.22 }}
-                className="max-w-[230px] rounded-xl border border-[#D4AF37]/45 bg-[#2A040C]/95 px-3 py-2 text-right text-[11px] leading-snug text-[#F7E7CE] shadow-xl backdrop-blur-md"
-              >
-                {statusToast}
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
